@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatDate, formatMoney, sum, todayISO, SECTIONS, SECTION_ORDER } from '../lib/format'
+import { formatDate, formatMoney, roundForSection, sum, todayISO, SECTIONS, SECTION_ORDER } from '../lib/format'
 
 export default function TransactionTracker({ entries, lineItems, onAdd, onDelete }) {
   const [entryDate, setEntryDate] = useState(todayISO())
@@ -21,7 +21,8 @@ export default function TransactionTracker({ entries, lineItems, onAdd, onDelete
     if (!lineItemId || !amount) return
     setAdding(true)
     try {
-      await onAdd({ entryDate, lineItemId, amount: Number(amount), description })
+      const section = itemsById[lineItemId]?.section
+      await onAdd({ entryDate, lineItemId, amount: roundForSection(amount, section), description })
       setAmount('')
       setDescription('')
     } finally {

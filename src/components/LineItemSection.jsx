@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatDate, formatMoney } from '../lib/format'
+import { formatDate, formatMoney, roundForSection } from '../lib/format'
 
 export default function LineItemSection({
   title,
@@ -44,7 +44,7 @@ export default function LineItemSection({
       await onAdd({
         name: name.trim(),
         dueDate: showDueDate && dueDate ? dueDate : null,
-        budgetAmount: budgetAmount ? Number(budgetAmount) : 0,
+        budgetAmount: budgetAmount ? roundForSection(budgetAmount, section) : 0,
       })
       setName('')
       setDueDate('')

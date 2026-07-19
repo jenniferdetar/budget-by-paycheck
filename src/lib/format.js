@@ -38,3 +38,15 @@ export function roundUpToDollar(value) {
   const n = Number(value)
   return Number.isNaN(n) ? null : Math.ceil(n)
 }
+
+export function roundDownToDollar(value) {
+  if (value === '' || value === null || value === undefined) return null
+  const n = Number(value)
+  return Number.isNaN(n) ? null : Math.floor(n)
+}
+
+// Conservative budgeting convention: round money going out up (never
+// under-budget an expense), and money coming in down (never over-count income).
+export function roundForSection(value, section) {
+  return section === 'income' ? roundDownToDollar(value) : roundUpToDollar(value)
+}
