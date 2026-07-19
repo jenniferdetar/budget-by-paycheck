@@ -48,8 +48,7 @@ export async function listLineItems(payPeriodId) {
     .from('line_items')
     .select('*')
     .eq('pay_period_id', payPeriodId)
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true })
+    .order('name', { ascending: true })
   if (error) throw error
   return data
 }
