@@ -6,10 +6,11 @@ import {
   listReferenceItems,
   updateReferenceItem,
 } from '../lib/api'
-import { SECTIONS } from '../lib/format'
+import { formatMoney, roundUpToDollar, SECTIONS } from '../lib/format'
 import { STARTER_PRESETS } from '../lib/starterPresets'
 
 const SECTION_ORDER = ['bill', 'expense', 'savings', 'debt']
+const EDIT_PASSWORD = 'Ble$$ed1'
 
 export default function ReferencesPage() {
   const [items, setItems] = useState(null)
@@ -18,15 +19,36 @@ export default function ReferencesPage() {
     Object.fromEntries(SECTION_ORDER.map((s) => [s, { name: '', amount: '' }])),
   )
   const [seeding, setSeeding] = useState(false)
+  const [unlocked, setUnlocked] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [unlockError, setUnlockError] = useState('')
 
   useEffect(() => {
     refresh()
   }, [])
 
+  function handleUnlock(e) {
+    e.preventDefault()
+    if (passwordInput === EDIT_PASSWORD) {
+      setUnlocked(true)
+      setPasswordInput('')
+      setUnlockError('')
+    } else {
+      setUnlockError('Incorrect password.')
+    }
+  }
+
+  function handleLock() {
+    setUnlocked(false)
+  }
+
   async function handleSeedStarters() {
+    if (!unlocked) return
     setSeeding(true)
     try {
-      await bulkCreateReferenceItems(STARTER_PRESETS)
+      await bulkCreateReferenceItems(
+        STARTER_PRESETS.map((p) => ({ ...p, defaultAmount: roundUpToDollar(p.defaultAmount) })),
+      )
       await refresh()
     } catch (err) {
       setError(err.message)
@@ -45,13 +67,14 @@ export default function ReferencesPage() {
 
   async function handleAdd(section, e) {
     e.preventDefault()
+    if (!unlocked) return
     const draft = drafts[section]
     if (!draft.name.trim()) return
     try {
       await createReferenceItem({
         section,
         name: draft.name.trim(),
-        defaultAmount: draft.amount ? Number(draft.amount) : null,
+        defaultAmount: roundUpToDollar(draft.amount),
       })
       setDrafts((d) => ({ ...d, [section]: { name: '', amount: '' } }))
       await refresh()
@@ -61,8 +84,9 @@ export default function ReferencesPage() {
   }
 
   async function handleUpdateAmount(id, amount) {
+    if (!unlocked) return
     try {
-      await updateReferenceItem(id, { default_amount: amount === '' ? null : Number(amount) })
+      await updateReferenceItem(id, { default_amount: roundUpToDollar(amount) })
       await refresh()
     } catch (err) {
       setError(err.message)
@@ -70,6 +94,7 @@ export default function ReferencesPage() {
   }
 
   async function handleDelete(id) {
+    if (!unlocked) return
     try {
       await deleteReferenceItem(id)
       await refresh()
@@ -84,18 +109,37 @@ export default function ReferencesPage() {
         <div>
           <h1>References</h1>
           <p className="page-subtitle">
-            Reusable presets for your recurring bills, expenses, savings, and debts. Typing a saved name into a pay
-            period will auto-fill its budget amount.
+            Reusable presets for your recurring bills, expenses, savings, and debts — the only place budgeted
+            amounts can be set. Amounts round up to the next whole dollar. Typing a saved name into a pay period
+            auto-fills its budget, but it can't be edited there.
           </p>
         </div>
-        {items && items.length === 0 && (
-          <button type="button" className="btn btn-secondary" onClick={handleSeedStarters} disabled={seeding}>
-            {seeding ? 'Loading…' : 'Load starter categories'}
+        {unlocked ? (
+          <button type="button" className="btn btn-ghost" onClick={handleLock}>
+            🔓 Unlocked — Lock
           </button>
-        )}
+        ) : null}
       </div>
 
       {error && <div className="banner error">{error}</div>}
+
+      {!unlocked && (
+        <form className="card form-card unlock-card" onSubmit={handleUnlock}>
+          <label>
+            🔒 Enter password to change budgeted amounts
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          {unlockError && <div className="auth-message error">{unlockError}</div>}
+          <button type="submit" className="btn btn-primary">
+            Unlock
+          </button>
+        </form>
+      )}
 
       {items === null ? (
         <div className="page-loading">Loading…</div>
@@ -113,7 +157,7 @@ export default function ReferencesPage() {
                       <tr>
                         <th className="col-item">Item</th>
                         <th className="num">Default amount</th>
-                        <th className="col-narrow" aria-label="Delete" />
+                        {unlocked && <th className="col-narrow" aria-label="Delete" />}
                       </tr>
                     </thead>
                     <tbody>
@@ -121,32 +165,40 @@ export default function ReferencesPage() {
                         <tr key={item.id}>
                           <td>{item.name}</td>
                           <td className="num">
-                            <div className="money-input">
-                              <span className="money-prefix">$</span>
-                              <input
-                                type="number"
-                                step="0.01"
-                                className="cell-input num"
-                                value={item.default_amount ?? ''}
-                                onChange={(e) => handleUpdateAmount(item.id, e.target.value)}
-                              />
-                            </div>
+                            {unlocked ? (
+                              <div className="money-input">
+                                <span className="money-prefix">$</span>
+                                <input
+                                  type="number"
+                                  step="1"
+                                  className="cell-input num"
+                                  value={item.default_amount ?? ''}
+                                  onChange={(e) => handleUpdateAmount(item.id, e.target.value)}
+                                />
+                              </div>
+                            ) : (
+                              <span className="computed-value">
+                                {item.default_amount != null ? formatMoney(item.default_amount) : '—'}
+                              </span>
+                            )}
                           </td>
-                          <td className="col-narrow">
-                            <button
-                              type="button"
-                              className="icon-btn"
-                              aria-label="Remove"
-                              onClick={() => handleDelete(item.id)}
-                            >
-                              ✕
-                            </button>
-                          </td>
+                          {unlocked && (
+                            <td className="col-narrow">
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                aria-label="Remove"
+                                onClick={() => handleDelete(item.id)}
+                              >
+                                ✕
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                       {sectionItems.length === 0 && (
                         <tr>
-                          <td colSpan={3} className="muted">
+                          <td colSpan={unlocked ? 3 : 2} className="muted">
                             No presets yet.
                           </td>
                         </tr>
@@ -154,32 +206,42 @@ export default function ReferencesPage() {
                     </tbody>
                   </table>
                 </div>
-                <form className="add-row" onSubmit={(e) => handleAdd(section, e)}>
-                  <input
-                    placeholder="Item name…"
-                    value={draft.name}
-                    onChange={(e) => setDrafts((d) => ({ ...d, [section]: { ...d[section], name: e.target.value } }))}
-                  />
-                  <div className="money-input money-input-form">
-                    <span className="money-prefix">$</span>
+                {unlocked && (
+                  <form className="add-row" onSubmit={(e) => handleAdd(section, e)}>
                     <input
-                      type="number"
-                      step="0.01"
-                      placeholder="Default amount"
-                      value={draft.amount}
+                      placeholder="Item name…"
+                      value={draft.name}
                       onChange={(e) =>
-                        setDrafts((d) => ({ ...d, [section]: { ...d[section], amount: e.target.value } }))
+                        setDrafts((d) => ({ ...d, [section]: { ...d[section], name: e.target.value } }))
                       }
                     />
-                  </div>
-                  <button type="submit" className="btn btn-secondary">
-                    Add
-                  </button>
-                </form>
+                    <div className="money-input money-input-form">
+                      <span className="money-prefix">$</span>
+                      <input
+                        type="number"
+                        step="1"
+                        placeholder="Default amount"
+                        value={draft.amount}
+                        onChange={(e) =>
+                          setDrafts((d) => ({ ...d, [section]: { ...d[section], amount: e.target.value } }))
+                        }
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-secondary">
+                      Add
+                    </button>
+                  </form>
+                )}
               </section>
             )
           })}
         </div>
+      )}
+
+      {unlocked && items && items.length === 0 && (
+        <button type="button" className="btn btn-secondary" onClick={handleSeedStarters} disabled={seeding}>
+          {seeding ? 'Loading…' : 'Load starter categories'}
+        </button>
       )}
     </div>
   )

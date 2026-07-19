@@ -10,6 +10,7 @@ export default function LineItemSection({
   dueDateLabel = 'Due',
   showPaid = false,
   showSinkingFund = false,
+  budgetEditable = true,
   actualEditable = true,
   computeActual,
   onAdd,
@@ -101,16 +102,20 @@ export default function LineItemSection({
                   </td>
                 )}
                 <td className="num">
-                  <div className="money-input">
-                    <span className="money-prefix">$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="cell-input num"
-                      value={item.budget_amount}
-                      onChange={(e) => onUpdate(item.id, { budget_amount: Number(e.target.value) || 0 })}
-                    />
-                  </div>
+                  {budgetEditable ? (
+                    <div className="money-input">
+                      <span className="money-prefix">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="cell-input num"
+                        value={item.budget_amount}
+                        onChange={(e) => onUpdate(item.id, { budget_amount: Number(e.target.value) || 0 })}
+                      />
+                    </div>
+                  ) : (
+                    <span className="computed-value">{formatMoney(item.budget_amount)}</span>
+                  )}
                 </td>
                 <td className="num">
                   {actualEditable ? (
@@ -181,9 +186,11 @@ export default function LineItemSection({
           <input
             type="number"
             step="0.01"
-            placeholder="Budget"
+            placeholder={budgetEditable ? 'Budget' : 'From References'}
             value={budgetAmount}
-            onChange={(e) => setBudgetAmount(e.target.value)}
+            readOnly={!budgetEditable}
+            title={budgetEditable ? undefined : 'Budget comes from the matching References preset'}
+            onChange={(e) => budgetEditable && setBudgetAmount(e.target.value)}
           />
         </div>
         <button type="submit" className="btn btn-secondary" disabled={adding}>

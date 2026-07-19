@@ -199,6 +199,7 @@ export default function PayPeriodPage() {
           showDueDate
           dueDateLabel="Due date"
           showPaid
+          budgetEditable={false}
           onAdd={(fields) => handleAdd('bill', fields)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
@@ -209,6 +210,7 @@ export default function PayPeriodPage() {
           section="expense"
           items={bySection.expense}
           referenceOptions={referencesBySection.expense}
+          budgetEditable={false}
           actualEditable={false}
           computeActual={computeExpenseActual}
           onAdd={(fields) => handleAdd('expense', fields)}
@@ -222,6 +224,7 @@ export default function PayPeriodPage() {
           items={bySection.savings}
           referenceOptions={referencesBySection.savings}
           showSinkingFund
+          budgetEditable={false}
           onAdd={(fields) => handleAdd('savings', fields)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
@@ -232,6 +235,7 @@ export default function PayPeriodPage() {
           section="debt"
           items={bySection.debt}
           referenceOptions={referencesBySection.debt}
+          budgetEditable={false}
           onAdd={(fields) => handleAdd('debt', fields)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}

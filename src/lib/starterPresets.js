@@ -24,7 +24,7 @@ export const STARTER_PRESETS = [
   { section: 'savings', name: 'Savings - House', defaultAmount: null },
   { section: 'savings', name: 'Savings - Other', defaultAmount: null },
   { section: 'savings', name: 'Vacation', defaultAmount: null },
-  { section: 'debt', name: 'Auto Payment', defaultAmount: 462.86 },
+  { section: 'debt', name: 'Auto Payment', defaultAmount: 463 },
   { section: 'debt', name: 'Home Equity Line of Credit', defaultAmount: null },
   { section: 'debt', name: 'Credit Card 1', defaultAmount: null },
   { section: 'debt', name: 'Credit Card 2', defaultAmount: null },

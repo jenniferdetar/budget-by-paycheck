@@ -24,3 +24,9 @@ export function sum(items, key) {
 export function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
+
+export function roundUpToDollar(value) {
+  if (value === '' || value === null || value === undefined) return null
+  const n = Number(value)
+  return Number.isNaN(n) ? null : Math.ceil(n)
+}

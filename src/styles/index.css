@@ -296,6 +296,19 @@ select:focus {
   gap: 14px;
 }
 
+.unlock-card {
+  max-width: 360px;
+}
+
+.unlock-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .form-row {
   display: flex;
   gap: 16px;
@@ -550,6 +563,15 @@ input[type='date'].cell-input {
   border-radius: 8px;
   padding: 0 0 0 10px;
   background: var(--surface);
+}
+
+.money-input-form input[readonly] {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.money-input-form:has(input[readonly]) {
+  background: var(--bg);
 }
 
 .money-input-form input {
