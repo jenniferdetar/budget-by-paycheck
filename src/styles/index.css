@@ -596,9 +596,23 @@ input[type='date'].cell-input {
 
 .computed-value,
 .locked-value {
-  display: inline-block;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   padding: 5px 6px;
   color: var(--text-muted);
+}
+
+.computed-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.locked-value {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .add-row {
