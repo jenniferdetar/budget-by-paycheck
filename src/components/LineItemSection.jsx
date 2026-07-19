@@ -62,13 +62,13 @@ export default function LineItemSection({
         <table className="line-table">
           <thead>
             <tr>
-              <th>Item</th>
+              <th className="col-item">Item</th>
               {showDueDate && <th>{dueDateLabel}</th>}
-              {showSinkingFund && <th>Sinking fund</th>}
+              {showSinkingFund && <th className="col-narrow">Sinking fund</th>}
               <th className="num">Budget</th>
               <th className="num">Actual</th>
-              {showPaid && <th>Paid</th>}
-              <th aria-label="Delete" />
+              {showPaid && <th className="col-narrow">Paid</th>}
+              <th className="col-narrow" aria-label="Delete" />
             </tr>
           </thead>
           <tbody>
@@ -92,7 +92,7 @@ export default function LineItemSection({
                   </td>
                 )}
                 {showSinkingFund && (
-                  <td className="center">
+                  <td className="col-narrow">
                     <input
                       type="checkbox"
                       checked={!!item.is_sinking_fund}
@@ -123,7 +123,7 @@ export default function LineItemSection({
                   )}
                 </td>
                 {showPaid && (
-                  <td className="center">
+                  <td className="col-narrow">
                     <input
                       type="checkbox"
                       checked={!!item.is_paid}
@@ -131,7 +131,7 @@ export default function LineItemSection({
                     />
                   </td>
                 )}
-                <td>
+                <td className="col-narrow">
                   <button type="button" className="icon-btn" aria-label="Remove" onClick={() => onDelete(item.id)}>
                     ✕
                   </button>

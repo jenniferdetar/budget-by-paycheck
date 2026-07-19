@@ -69,9 +69,9 @@ export default function ExpenseTracker({ entries, expenseItems, onAdd, onDelete 
                 <tr>
                   <th>Date</th>
                   <th>Category</th>
-                  <th>Description</th>
+                  <th className="col-item">Description</th>
                   <th className="num">Amount</th>
-                  <th aria-label="Delete" />
+                  <th className="col-narrow" aria-label="Delete" />
                 </tr>
               </thead>
               <tbody>
@@ -81,7 +81,7 @@ export default function ExpenseTracker({ entries, expenseItems, onAdd, onDelete 
                     <td>{itemsById[entry.line_item_id]?.name || '—'}</td>
                     <td>{entry.description}</td>
                     <td className="num">{formatMoney(entry.amount)}</td>
-                    <td>
+                    <td className="col-narrow">
                       <button type="button" className="icon-btn" aria-label="Remove" onClick={() => onDelete(entry.id)}>
                         ✕
                       </button>
