@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.local
+.vercel
+*.log
+.DS_Store
+
+# .env.production IS committed on purpose: it only holds the Supabase
+# project URL and publishable/anon key, which are safe for the client
+# bundle (data access is enforced by row-level security, not key secrecy).
