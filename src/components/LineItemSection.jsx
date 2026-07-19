@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatDate, formatMoney, sum } from '../lib/format'
+import { formatDate, formatMoney } from '../lib/format'
 
 export default function LineItemSection({
   title,
@@ -11,6 +11,7 @@ export default function LineItemSection({
   showPaid = false,
   showSinkingFund = false,
   budgetSource = 'reference', // 'reference' (auto-filled, locked) | 'manual' (typed once at creation)
+  computeBudget,
   computeActual,
   onAdd,
   onUpdate,
@@ -22,7 +23,8 @@ export default function LineItemSection({
   const [adding, setAdding] = useState(false)
 
   const manualBudget = budgetSource === 'manual'
-  const budgetTotal = sum(items, 'budget_amount')
+  const getBudget = (item) => (computeBudget ? computeBudget(item) : Number(item.budget_amount) || 0)
+  const budgetTotal = items.reduce((acc, item) => acc + getBudget(item), 0)
   const actualTotal = items.reduce((acc, item) => acc + (computeActual ? computeActual(item) : 0), 0)
 
   function handlePickReference(value) {
@@ -91,7 +93,7 @@ export default function LineItemSection({
                   </td>
                 )}
                 <td className="num">
-                  <span className="computed-value">{formatMoney(item.budget_amount)}</span>
+                  <span className="computed-value">{formatMoney(getBudget(item))}</span>
                 </td>
                 <td className="num">
                   <span className="computed-value">{formatMoney(computeActual ? computeActual(item) : 0)}</span>

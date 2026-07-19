@@ -12,7 +12,6 @@ import {
   updateLineItem,
   updatePayPeriod,
 } from '../lib/api'
-import { sum } from '../lib/format'
 import LineItemSection from '../components/LineItemSection'
 import TransactionTracker from '../components/TransactionTracker'
 import SummaryPanel from '../components/SummaryPanel'
@@ -83,6 +82,21 @@ export default function PayPeriodPage() {
     return groups
   }, [references])
 
+  const referenceAmountByKey = useMemo(() => {
+    const map = {}
+    for (const ref of references) {
+      if (ref.default_amount != null) {
+        map[`${ref.section}:${ref.name}`] = Number(ref.default_amount)
+      }
+    }
+    return map
+  }, [references])
+
+  function computeBudget(item) {
+    const liveAmount = referenceAmountByKey[`${item.section}:${item.name}`]
+    return liveAmount != null ? liveAmount : Number(item.budget_amount) || 0
+  }
+
   async function refreshItems() {
     const lineItems = await listLineItems(periodId)
     setItems(lineItems)
@@ -145,15 +159,15 @@ export default function PayPeriodPage() {
   if (loading) return <div className="page-loading">Loading…</div>
   if (!period) return <div className="page-loading">Pay period not found.</div>
 
-  const incomeBudget = sum(bySection.income, 'budget_amount')
+  const incomeBudget = bySection.income.reduce((acc, i) => acc + computeBudget(i), 0)
   const incomeActual = bySection.income.reduce((acc, i) => acc + computeActual(i), 0)
-  const billsBudget = sum(bySection.bill, 'budget_amount')
+  const billsBudget = bySection.bill.reduce((acc, i) => acc + computeBudget(i), 0)
   const billsActual = bySection.bill.reduce((acc, i) => acc + computeActual(i), 0)
-  const expensesBudget = sum(bySection.expense, 'budget_amount')
+  const expensesBudget = bySection.expense.reduce((acc, i) => acc + computeBudget(i), 0)
   const expensesActual = bySection.expense.reduce((acc, i) => acc + computeActual(i), 0)
-  const savingsBudget = sum(bySection.savings, 'budget_amount')
+  const savingsBudget = bySection.savings.reduce((acc, i) => acc + computeBudget(i), 0)
   const savingsActual = bySection.savings.reduce((acc, i) => acc + computeActual(i), 0)
-  const debtBudget = sum(bySection.debt, 'budget_amount')
+  const debtBudget = bySection.debt.reduce((acc, i) => acc + computeBudget(i), 0)
   const debtActual = bySection.debt.reduce((acc, i) => acc + computeActual(i), 0)
 
   const remainingBudget = incomeBudget - (billsBudget + expensesBudget + savingsBudget + debtBudget)
@@ -187,6 +201,7 @@ export default function PayPeriodPage() {
           showDueDate
           dueDateLabel="Date"
           budgetSource="manual"
+          computeBudget={computeBudget}
           computeActual={computeActual}
           onAdd={(fields) => handleAdd('income', fields)}
           onUpdate={handleUpdate}
@@ -201,6 +216,7 @@ export default function PayPeriodPage() {
           showDueDate
           dueDateLabel="Due date"
           showPaid
+          computeBudget={computeBudget}
           computeActual={computeActual}
           onAdd={(fields) => handleAdd('bill', fields)}
           onUpdate={handleUpdate}
@@ -212,6 +228,7 @@ export default function PayPeriodPage() {
           section="expense"
           items={bySection.expense}
           referenceOptions={referencesBySection.expense}
+          computeBudget={computeBudget}
           computeActual={computeActual}
           onAdd={(fields) => handleAdd('expense', fields)}
           onUpdate={handleUpdate}
@@ -224,6 +241,7 @@ export default function PayPeriodPage() {
           items={bySection.savings}
           referenceOptions={referencesBySection.savings}
           showSinkingFund
+          computeBudget={computeBudget}
           computeActual={computeActual}
           onAdd={(fields) => handleAdd('savings', fields)}
           onUpdate={handleUpdate}
@@ -235,6 +253,7 @@ export default function PayPeriodPage() {
           section="debt"
           items={bySection.debt}
           referenceOptions={referencesBySection.debt}
+          computeBudget={computeBudget}
           computeActual={computeActual}
           onAdd={(fields) => handleAdd('debt', fields)}
           onUpdate={handleUpdate}

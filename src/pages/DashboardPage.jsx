@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { createPayPeriod, deletePayPeriod, listLineItems, listPayPeriods } from '../lib/api'
+import { createPayPeriod, deletePayPeriod, listLineItems, listPayPeriods, listReferenceItems } from '../lib/api'
 import { formatDate, formatMoney, sum, todayISO } from '../lib/format'
 
 function addDays(iso, days) {
@@ -25,13 +25,25 @@ export default function DashboardPage() {
 
   async function refresh() {
     try {
-      const data = await listPayPeriods()
+      const [data, references] = await Promise.all([listPayPeriods(), listReferenceItems()])
       setPeriods(data)
+
+      const referenceAmountByKey = {}
+      for (const ref of references) {
+        if (ref.default_amount != null) {
+          referenceAmountByKey[`${ref.section}:${ref.name}`] = Number(ref.default_amount)
+        }
+      }
+      function liveBudget(item) {
+        const liveAmount = referenceAmountByKey[`${item.section}:${item.name}`]
+        return liveAmount != null ? liveAmount : Number(item.budget_amount) || 0
+      }
+
       const entries = await Promise.all(
         data.map(async (p) => {
           const items = await listLineItems(p.id)
-          const income = sum(items.filter((i) => i.section === 'income'), 'budget_amount')
-          const outflow = sum(items.filter((i) => i.section !== 'income'), 'budget_amount')
+          const income = items.filter((i) => i.section === 'income').reduce((acc, i) => acc + liveBudget(i), 0)
+          const outflow = items.filter((i) => i.section !== 'income').reduce((acc, i) => acc + liveBudget(i), 0)
           return [p.id, { income, outflow, remaining: income - outflow }]
         }),
       )
