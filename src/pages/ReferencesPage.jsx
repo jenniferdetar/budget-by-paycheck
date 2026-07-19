@@ -111,9 +111,9 @@ export default function ReferencesPage() {
                   <table className="line-table">
                     <thead>
                       <tr>
-                        <th>Item</th>
+                        <th className="col-item">Item</th>
                         <th className="num">Default amount</th>
-                        <th aria-label="Delete" />
+                        <th className="col-narrow" aria-label="Delete" />
                       </tr>
                     </thead>
                     <tbody>
@@ -121,15 +121,18 @@ export default function ReferencesPage() {
                         <tr key={item.id}>
                           <td>{item.name}</td>
                           <td className="num">
-                            <input
-                              type="number"
-                              step="0.01"
-                              className="cell-input num"
-                              value={item.default_amount ?? ''}
-                              onChange={(e) => handleUpdateAmount(item.id, e.target.value)}
-                            />
+                            <div className="money-input">
+                              <span className="money-prefix">$</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                className="cell-input num"
+                                value={item.default_amount ?? ''}
+                                onChange={(e) => handleUpdateAmount(item.id, e.target.value)}
+                              />
+                            </div>
                           </td>
-                          <td>
+                          <td className="col-narrow">
                             <button
                               type="button"
                               className="icon-btn"
@@ -157,13 +160,18 @@ export default function ReferencesPage() {
                     value={draft.name}
                     onChange={(e) => setDrafts((d) => ({ ...d, [section]: { ...d[section], name: e.target.value } }))}
                   />
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Default amount"
-                    value={draft.amount}
-                    onChange={(e) => setDrafts((d) => ({ ...d, [section]: { ...d[section], amount: e.target.value } }))}
-                  />
+                  <div className="money-input money-input-form">
+                    <span className="money-prefix">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Default amount"
+                      value={draft.amount}
+                      onChange={(e) =>
+                        setDrafts((d) => ({ ...d, [section]: { ...d[section], amount: e.target.value } }))
+                      }
+                    />
+                  </div>
                   <button type="submit" className="btn btn-secondary">
                     Add
                   </button>

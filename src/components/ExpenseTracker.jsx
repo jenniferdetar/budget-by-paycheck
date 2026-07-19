@@ -44,14 +44,17 @@ export default function ExpenseTracker({ entries, expenseItems, onAdd, onDelete 
                 </option>
               ))}
             </select>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-            />
+            <div className="money-input money-input-form">
+              <span className="money-prefix">$</span>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
+            </div>
             <input
               type="text"
               placeholder="Description (optional)"

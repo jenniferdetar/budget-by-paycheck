@@ -64,10 +64,10 @@ export default function LineItemSection({
             <tr>
               <th className="col-item">Item</th>
               {showDueDate && <th>{dueDateLabel}</th>}
-              {showSinkingFund && <th className="col-narrow">Sinking fund</th>}
+              {showSinkingFund && <th className="col-check">Sinking fund</th>}
               <th className="num">Budget</th>
               <th className="num">Actual</th>
-              {showPaid && <th className="col-narrow">Paid</th>}
+              {showPaid && <th className="col-check">Paid</th>}
               <th className="col-narrow" aria-label="Delete" />
             </tr>
           </thead>
@@ -92,7 +92,7 @@ export default function LineItemSection({
                   </td>
                 )}
                 {showSinkingFund && (
-                  <td className="col-narrow">
+                  <td className="col-check">
                     <input
                       type="checkbox"
                       checked={!!item.is_sinking_fund}
@@ -101,29 +101,35 @@ export default function LineItemSection({
                   </td>
                 )}
                 <td className="num">
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="cell-input num"
-                    value={item.budget_amount}
-                    onChange={(e) => onUpdate(item.id, { budget_amount: Number(e.target.value) || 0 })}
-                  />
-                </td>
-                <td className="num">
-                  {actualEditable ? (
+                  <div className="money-input">
+                    <span className="money-prefix">$</span>
                     <input
                       type="number"
                       step="0.01"
                       className="cell-input num"
-                      value={item.actual_amount}
-                      onChange={(e) => onUpdate(item.id, { actual_amount: Number(e.target.value) || 0 })}
+                      value={item.budget_amount}
+                      onChange={(e) => onUpdate(item.id, { budget_amount: Number(e.target.value) || 0 })}
                     />
+                  </div>
+                </td>
+                <td className="num">
+                  {actualEditable ? (
+                    <div className="money-input">
+                      <span className="money-prefix">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="cell-input num"
+                        value={item.actual_amount}
+                        onChange={(e) => onUpdate(item.id, { actual_amount: Number(e.target.value) || 0 })}
+                      />
+                    </div>
                   ) : (
                     <span className="computed-value">{formatMoney(computeActual ? computeActual(item) : 0)}</span>
                   )}
                 </td>
                 {showPaid && (
-                  <td className="col-narrow">
+                  <td className="col-check">
                     <input
                       type="checkbox"
                       checked={!!item.is_paid}
@@ -170,13 +176,16 @@ export default function LineItemSection({
           ))}
         </datalist>
         {showDueDate && <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />}
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Budget"
-          value={budgetAmount}
-          onChange={(e) => setBudgetAmount(e.target.value)}
-        />
+        <div className="money-input money-input-form">
+          <span className="money-prefix">$</span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="Budget"
+            value={budgetAmount}
+            onChange={(e) => setBudgetAmount(e.target.value)}
+          />
+        </div>
         <button type="submit" className="btn btn-secondary" disabled={adding}>
           Add
         </button>

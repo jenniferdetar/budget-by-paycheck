@@ -497,7 +497,12 @@ select:focus {
 }
 
 .line-table .col-narrow {
-  width: 38px;
+  width: 34px;
+  text-align: center;
+}
+
+.line-table .col-check {
+  width: 88px;
   text-align: center;
 }
 
@@ -518,6 +523,45 @@ select:focus {
 
 input[type='date'].cell-input {
   padding-right: 2px;
+}
+
+.money-input {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.money-input .money-prefix {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.money-input .cell-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.money-input-form {
+  flex: 1;
+  min-width: 100px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 0 0 10px;
+  background: var(--surface);
+}
+
+.money-input-form input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  padding: 8px 10px 8px 2px;
+  border-radius: 0;
+}
+
+.money-input-form input:focus {
+  outline: none;
 }
 
 .cell-input:hover {
