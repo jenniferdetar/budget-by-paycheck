@@ -10,7 +10,12 @@ export const SECTION_ORDER = ['income', 'bill', 'expense', 'savings', 'debt']
 
 export function formatMoney(value) {
   const n = Number(value) || 0
-  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+  return n.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
 }
 
 export function formatDate(value) {
