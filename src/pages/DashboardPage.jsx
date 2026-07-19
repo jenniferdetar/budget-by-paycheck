@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { createPayPeriod, deletePayPeriod, listLineItems, listPayPeriods, listReferenceItems } from '../lib/api'
+import { createPayPeriod, deletePayPeriod, listExpenseEntries, listLineItems, listPayPeriods } from '../lib/api'
 import { formatDate, formatMoney, sum, todayISO } from '../lib/format'
 
 function addDays(iso, days) {
@@ -25,25 +25,22 @@ export default function DashboardPage() {
 
   async function refresh() {
     try {
-      const [data, references] = await Promise.all([listPayPeriods(), listReferenceItems()])
+      const data = await listPayPeriods()
       setPeriods(data)
-
-      const referenceAmountByKey = {}
-      for (const ref of references) {
-        if (ref.default_amount != null) {
-          referenceAmountByKey[`${ref.section}:${ref.name}`] = Number(ref.default_amount)
-        }
-      }
-      function liveBudget(item) {
-        const liveAmount = referenceAmountByKey[`${item.section}:${item.name}`]
-        return liveAmount != null ? liveAmount : Number(item.budget_amount) || 0
-      }
 
       const entries = await Promise.all(
         data.map(async (p) => {
-          const items = await listLineItems(p.id)
-          const income = items.filter((i) => i.section === 'income').reduce((acc, i) => acc + liveBudget(i), 0)
-          const outflow = items.filter((i) => i.section !== 'income').reduce((acc, i) => acc + liveBudget(i), 0)
+          const [items, transactionEntries] = await Promise.all([listLineItems(p.id), listExpenseEntries(p.id)])
+
+          const actualById = {}
+          for (const entry of transactionEntries) {
+            if (!entry.line_item_id) continue
+            actualById[entry.line_item_id] = (actualById[entry.line_item_id] || 0) + (Number(entry.amount) || 0)
+          }
+          const actual = (item) => actualById[item.id] || 0
+
+          const income = items.filter((i) => i.section === 'income').reduce((acc, i) => acc + actual(i), 0)
+          const outflow = items.filter((i) => i.section !== 'income').reduce((acc, i) => acc + actual(i), 0)
           return [p.id, { income, outflow, remaining: income - outflow }]
         }),
       )
@@ -146,11 +143,11 @@ export default function DashboardPage() {
         <>
           <div className="summary-strip">
             <div className="summary-tile">
-              <span>Total Income</span>
+              <span>Actual Income</span>
               <strong>{formatMoney(overall.income)}</strong>
             </div>
             <div className="summary-tile">
-              <span>Total Planned Out</span>
+              <span>Actual Spent</span>
               <strong>{formatMoney(overall.outflow)}</strong>
             </div>
             <div className={`summary-tile ${overall.remaining < 0 ? 'negative' : 'positive'}`}>
@@ -187,7 +184,7 @@ export default function DashboardPage() {
                       <strong>{formatMoney(totals.income)}</strong>
                     </div>
                     <div>
-                      <span>Planned Out</span>
+                      <span>Spent</span>
                       <strong>{formatMoney(totals.outflow)}</strong>
                     </div>
                     <div className={totals.remaining < 0 ? 'negative' : 'positive'}>
