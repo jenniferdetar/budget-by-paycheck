@@ -1,9 +1,12 @@
 export const SECTIONS = {
+  income: { label: 'Income', totalLabel: 'Income Total' },
   bill: { label: 'Bills', totalLabel: 'Bills Total' },
   expense: { label: 'Expenses', totalLabel: 'Expenses Total' },
   savings: { label: 'Savings', totalLabel: 'Savings Total' },
   debt: { label: 'Debt', totalLabel: 'Debt Total' },
 }
+
+export const SECTION_ORDER = ['income', 'bill', 'expense', 'savings', 'debt']
 
 export function formatMoney(value) {
   const n = Number(value) || 0

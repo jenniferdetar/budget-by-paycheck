@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatMoney, sum } from '../lib/format'
+import { formatDate, formatMoney, sum } from '../lib/format'
 
 export default function LineItemSection({
   title,
@@ -10,8 +10,7 @@ export default function LineItemSection({
   dueDateLabel = 'Due',
   showPaid = false,
   showSinkingFund = false,
-  budgetEditable = true,
-  actualEditable = true,
+  budgetSource = 'reference', // 'reference' (auto-filled, locked) | 'manual' (typed once at creation)
   computeActual,
   onAdd,
   onUpdate,
@@ -22,14 +21,13 @@ export default function LineItemSection({
   const [budgetAmount, setBudgetAmount] = useState('')
   const [adding, setAdding] = useState(false)
 
+  const manualBudget = budgetSource === 'manual'
   const budgetTotal = sum(items, 'budget_amount')
-  const actualTotal = items.reduce(
-    (acc, item) => acc + (computeActual ? computeActual(item) : Number(item.actual_amount) || 0),
-    0,
-  )
+  const actualTotal = items.reduce((acc, item) => acc + (computeActual ? computeActual(item) : 0), 0)
 
   function handlePickReference(value) {
     setName(value)
+    if (manualBudget) return
     const match = referenceOptions.find((r) => r.name === value)
     if (match && match.default_amount != null) {
       setBudgetAmount(String(match.default_amount))
@@ -76,20 +74,11 @@ export default function LineItemSection({
             {items.map((item) => (
               <tr key={item.id}>
                 <td>
-                  <input
-                    className="cell-input"
-                    value={item.name}
-                    onChange={(e) => onUpdate(item.id, { name: e.target.value })}
-                  />
+                  <span className="locked-value">{item.name}</span>
                 </td>
                 {showDueDate && (
                   <td>
-                    <input
-                      type="date"
-                      className="cell-input"
-                      value={item.due_date || ''}
-                      onChange={(e) => onUpdate(item.id, { due_date: e.target.value || null })}
-                    />
+                    <span className="locked-value">{formatDate(item.due_date) || '—'}</span>
                   </td>
                 )}
                 {showSinkingFund && (
@@ -102,36 +91,10 @@ export default function LineItemSection({
                   </td>
                 )}
                 <td className="num">
-                  {budgetEditable ? (
-                    <div className="money-input">
-                      <span className="money-prefix">$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="cell-input num"
-                        value={item.budget_amount}
-                        onChange={(e) => onUpdate(item.id, { budget_amount: Number(e.target.value) || 0 })}
-                      />
-                    </div>
-                  ) : (
-                    <span className="computed-value">{formatMoney(item.budget_amount)}</span>
-                  )}
+                  <span className="computed-value">{formatMoney(item.budget_amount)}</span>
                 </td>
                 <td className="num">
-                  {actualEditable ? (
-                    <div className="money-input">
-                      <span className="money-prefix">$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="cell-input num"
-                        value={item.actual_amount}
-                        onChange={(e) => onUpdate(item.id, { actual_amount: Number(e.target.value) || 0 })}
-                      />
-                    </div>
-                  ) : (
-                    <span className="computed-value">{formatMoney(computeActual ? computeActual(item) : 0)}</span>
-                  )}
+                  <span className="computed-value">{formatMoney(computeActual ? computeActual(item) : 0)}</span>
                 </td>
                 {showPaid && (
                   <td className="col-check">
@@ -186,11 +149,11 @@ export default function LineItemSection({
           <input
             type="number"
             step="0.01"
-            placeholder={budgetEditable ? 'Budget' : 'From References'}
+            placeholder={manualBudget ? 'Budget' : 'From References'}
             value={budgetAmount}
-            readOnly={!budgetEditable}
-            title={budgetEditable ? undefined : 'Budget comes from the matching References preset'}
-            onChange={(e) => budgetEditable && setBudgetAmount(e.target.value)}
+            readOnly={!manualBudget}
+            title={manualBudget ? undefined : 'Budget comes from the matching References preset'}
+            onChange={(e) => manualBudget && setBudgetAmount(e.target.value)}
           />
         </div>
         <button type="submit" className="btn btn-secondary" disabled={adding}>

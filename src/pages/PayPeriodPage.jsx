@@ -14,7 +14,7 @@ import {
 } from '../lib/api'
 import { sum } from '../lib/format'
 import LineItemSection from '../components/LineItemSection'
-import ExpenseTracker from '../components/ExpenseTracker'
+import TransactionTracker from '../components/TransactionTracker'
 import SummaryPanel from '../components/SummaryPanel'
 
 export default function PayPeriodPage() {
@@ -31,7 +31,7 @@ export default function PayPeriodPage() {
     async function load() {
       setLoading(true)
       try {
-        const [p, lineItems, expenseEntries, refs] = await Promise.all([
+        const [p, lineItems, transactionEntries, refs] = await Promise.all([
           getPayPeriod(periodId),
           listLineItems(periodId),
           listExpenseEntries(periodId),
@@ -40,7 +40,7 @@ export default function PayPeriodPage() {
         if (cancelled) return
         setPeriod(p)
         setItems(lineItems)
-        setEntries(expenseEntries)
+        setEntries(transactionEntries)
         setReferences(refs)
       } catch (err) {
         if (!cancelled) setError(err.message)
@@ -62,7 +62,7 @@ export default function PayPeriodPage() {
     return groups
   }, [items])
 
-  const expenseActualById = useMemo(() => {
+  const actualById = useMemo(() => {
     const map = {}
     for (const entry of entries) {
       if (!entry.line_item_id) continue
@@ -71,8 +71,8 @@ export default function PayPeriodPage() {
     return map
   }, [entries])
 
-  function computeExpenseActual(item) {
-    return expenseActualById[item.id] || 0
+  function computeActual(item) {
+    return actualById[item.id] || 0
   }
 
   const referencesBySection = useMemo(() => {
@@ -146,15 +146,15 @@ export default function PayPeriodPage() {
   if (!period) return <div className="page-loading">Pay period not found.</div>
 
   const incomeBudget = sum(bySection.income, 'budget_amount')
-  const incomeActual = sum(bySection.income, 'actual_amount')
+  const incomeActual = bySection.income.reduce((acc, i) => acc + computeActual(i), 0)
   const billsBudget = sum(bySection.bill, 'budget_amount')
-  const billsActual = sum(bySection.bill, 'actual_amount')
+  const billsActual = bySection.bill.reduce((acc, i) => acc + computeActual(i), 0)
   const expensesBudget = sum(bySection.expense, 'budget_amount')
-  const expensesActual = bySection.expense.reduce((acc, i) => acc + computeExpenseActual(i), 0)
+  const expensesActual = bySection.expense.reduce((acc, i) => acc + computeActual(i), 0)
   const savingsBudget = sum(bySection.savings, 'budget_amount')
-  const savingsActual = sum(bySection.savings, 'actual_amount')
+  const savingsActual = bySection.savings.reduce((acc, i) => acc + computeActual(i), 0)
   const debtBudget = sum(bySection.debt, 'budget_amount')
-  const debtActual = sum(bySection.debt, 'actual_amount')
+  const debtActual = bySection.debt.reduce((acc, i) => acc + computeActual(i), 0)
 
   const remainingBudget = incomeBudget - (billsBudget + expensesBudget + savingsBudget + debtBudget)
   const remainingActual = incomeActual - (billsActual + expensesActual + savingsActual + debtActual)
@@ -186,6 +186,8 @@ export default function PayPeriodPage() {
           items={bySection.income}
           showDueDate
           dueDateLabel="Date"
+          budgetSource="manual"
+          computeActual={computeActual}
           onAdd={(fields) => handleAdd('income', fields)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
@@ -199,7 +201,7 @@ export default function PayPeriodPage() {
           showDueDate
           dueDateLabel="Due date"
           showPaid
-          budgetEditable={false}
+          computeActual={computeActual}
           onAdd={(fields) => handleAdd('bill', fields)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
@@ -210,9 +212,7 @@ export default function PayPeriodPage() {
           section="expense"
           items={bySection.expense}
           referenceOptions={referencesBySection.expense}
-          budgetEditable={false}
-          actualEditable={false}
-          computeActual={computeExpenseActual}
+          computeActual={computeActual}
           onAdd={(fields) => handleAdd('expense', fields)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
@@ -224,7 +224,7 @@ export default function PayPeriodPage() {
           items={bySection.savings}
           referenceOptions={referencesBySection.savings}
           showSinkingFund
-          budgetEditable={false}
+          computeActual={computeActual}
           onAdd={(fields) => handleAdd('savings', fields)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
@@ -235,7 +235,7 @@ export default function PayPeriodPage() {
           section="debt"
           items={bySection.debt}
           referenceOptions={referencesBySection.debt}
-          budgetEditable={false}
+          computeActual={computeActual}
           onAdd={(fields) => handleAdd('debt', fields)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
@@ -254,12 +254,7 @@ export default function PayPeriodPage() {
         />
       </div>
 
-      <ExpenseTracker
-        entries={entries}
-        expenseItems={bySection.expense}
-        onAdd={handleAddEntry}
-        onDelete={handleDeleteEntry}
-      />
+      <TransactionTracker entries={entries} lineItems={items} onAdd={handleAddEntry} onDelete={handleDeleteEntry} />
     </div>
   )
 }

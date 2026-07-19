@@ -594,7 +594,8 @@ input[type='date'].cell-input {
   text-align: right;
 }
 
-.computed-value {
+.computed-value,
+.locked-value {
   display: inline-block;
   padding: 5px 6px;
   color: var(--text-muted);

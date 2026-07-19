@@ -1,15 +1,20 @@
 import { useState } from 'react'
-import { formatDate, formatMoney, sum, todayISO } from '../lib/format'
+import { formatDate, formatMoney, sum, todayISO, SECTIONS, SECTION_ORDER } from '../lib/format'
 
-export default function ExpenseTracker({ entries, expenseItems, onAdd, onDelete }) {
+export default function TransactionTracker({ entries, lineItems, onAdd, onDelete }) {
   const [entryDate, setEntryDate] = useState(todayISO())
-  const [lineItemId, setLineItemId] = useState(expenseItems[0]?.id || '')
+  const [lineItemId, setLineItemId] = useState(lineItems[0]?.id || '')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [adding, setAdding] = useState(false)
 
-  const itemsById = Object.fromEntries(expenseItems.map((i) => [i.id, i]))
+  const itemsById = Object.fromEntries(lineItems.map((i) => [i.id, i]))
   const total = sum(entries, 'amount')
+
+  const itemsBySection = SECTION_ORDER.map((section) => ({
+    section,
+    items: lineItems.filter((i) => i.section === section),
+  })).filter((group) => group.items.length > 0)
 
   async function handleAdd(e) {
     e.preventDefault()
@@ -26,22 +31,27 @@ export default function ExpenseTracker({ entries, expenseItems, onAdd, onDelete 
 
   return (
     <section className="card section-card">
-      <h2>Expense Tracker</h2>
+      <h2>Transaction Tracker</h2>
       <p className="muted small">
-        Log every purchase here — it automatically rolls up into the matching category's Actual total above.
+        This is the only place to record what actually happened — income received, bills paid, money spent, saved,
+        or paid toward debt. Every entry rolls up into the matching category's Actual total above.
       </p>
 
-      {expenseItems.length === 0 ? (
-        <p className="muted">Add an expense category above before logging purchases.</p>
+      {lineItems.length === 0 ? (
+        <p className="muted">Add income, bills, expenses, savings, or debt above before logging transactions.</p>
       ) : (
         <>
           <form className="add-row expense-tracker-row" onSubmit={handleAdd}>
             <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
             <select value={lineItemId} onChange={(e) => setLineItemId(e.target.value)}>
-              {expenseItems.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
+              {itemsBySection.map((group) => (
+                <optgroup key={group.section} label={SECTIONS[group.section].label}>
+                  {group.items.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
             <div className="money-input money-input-form">
@@ -78,19 +88,30 @@ export default function ExpenseTracker({ entries, expenseItems, onAdd, onDelete 
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>{formatDate(entry.entry_date)}</td>
-                    <td>{itemsById[entry.line_item_id]?.name || '—'}</td>
-                    <td>{entry.description}</td>
-                    <td className="num">{formatMoney(entry.amount)}</td>
-                    <td className="col-narrow">
-                      <button type="button" className="icon-btn" aria-label="Remove" onClick={() => onDelete(entry.id)}>
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {entries.map((entry) => {
+                  const item = itemsById[entry.line_item_id]
+                  return (
+                    <tr key={entry.id}>
+                      <td>{formatDate(entry.entry_date)}</td>
+                      <td>
+                        {item?.name || '—'}
+                        {item && <span className="muted small"> ({SECTIONS[item.section].label})</span>}
+                      </td>
+                      <td>{entry.description}</td>
+                      <td className="num">{formatMoney(entry.amount)}</td>
+                      <td className="col-narrow">
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          aria-label="Remove"
+                          onClick={() => onDelete(entry.id)}
+                        >
+                          ✕
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
               <tfoot>
                 <tr>
